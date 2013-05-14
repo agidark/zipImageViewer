@@ -1,9 +1,13 @@
 <html>
 <head>
-</head>
-<body>
-
-
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"> 
+<title>Zip image viewer - 
+<?PHP
+echo $_GET[file];
+echo ", page ";
+echo $_GET[page];
+?>
+</title>
 <?php
 //source
 //http://coursesweb.net/php-mysql/read-zip-archive-data-php_cs
@@ -40,11 +44,11 @@ function readImageData($zip_data){
 	
 	for($i = 0 ; $i < sizeof($zip_data); $i ++)
 	{
-		$filename = substr($zip_data[$i][name],-5); // 뒤에서 5개 문자 뽑아옵니다.
-		$fn = explode(".",$filename); // .(dot)으로 구분합니다.
-		$file_name_ext = $fn[sizeof($fn)-1]; // .(dot)으로 구분하여 뒤에 확장자를 뽑아옵니다.
+		$filename = substr($zip_data[$i][name],-5); // last 5 cahrs
+		$fn = explode(".",$filename); // divided by .
+		$file_name_ext = $fn[sizeof($fn)-1]; // get extension
 		
-		//image 확장자만 다시 리스트화
+		//extract image file
 		if($file_name_ext == 'jpg' || $file_name_ext == 'png' || $file_name_ext == 'jpeg')
 		{
 			$image_data[] = array(
@@ -52,12 +56,7 @@ function readImageData($zip_data){
 			);
 		}
 	}
-/*	
-	for($i = 0 ; $i < sizeof($image_data) ; $i ++){
-		echo $image_data[$i][0];
-		echo "<br/>";
-	}
-*/
+
 	return $image_data;
 	
 }
@@ -65,44 +64,122 @@ function readImageData($zip_data){
 
 <?PHP
 function drawImageData($image_data){
-//		echo "zip://".$_GET[file]."#".$image_data[$_GET[page]][name];
 
-//	$zip = zip_open($zip_file);
-//	if($zip)
-//	{
-//		$left = file_get_contents('zip://'.$_GET[file].'#'.$image_data[$_GET[page]][name]);
-//	}
 	
 	$zip = new ZipArchive();
 	$res = $zip->open($_GET[file]);
 	if($res == TRUE)
 	{
-//		$left = file_get_contents('zip://'.$_GET[file].'#'.$image_data[$_GET[page]][name]);
-		file_put_contents("left.jpg", file_get_contents('zip://'.$_GET[file].'#'.$image_data[$_GET[page]][0]));
-//		$zip->extractTo('left.jpg', 'foo.txt');
-		$left_num = $_GET[page] - 2;
-		$right_num = $_GET[page] + 2;
-		echo "<a href=\"viewer.php?file=".$_GET[file]."&page=".$left_num."\">";
-		echo "<img src=\"left.jpg\" height=\"100%\"/>";
-		echo "</a>";
 
-		file_put_contents("right.jpg", file_get_contents('zip://'.$_GET[file].'#'.$image_data[$_GET[page]+1][0]));
-		echo "<a href=\"viewer.php?file=".$_GET[file]."&page=".$right_num."\">";
-		echo "<img src=\"right.jpg\" height=\"100%\"/>";
-		echo "</a>";
-		
-//		echo $left;
+		file_put_contents("left.jpg", file_get_contents('zip://'.$_GET[file].'#'.$image_data[$_GET[page]][0]));
+
+		if($_GET[page] - 2  < 0){
+			$left_num = 0;
+		}
+		else{
+			$left_num = $_GET[page] - 2;
+		}
+		if($_GET[page] + 2 > sizeof($image_data)){
+			$right_num = sizeof($image_data) - 1;
+		}
+		else{
+			$right_num = $_GET[page] + 2;
+		}
+		if($_GET[LtoR] == 1){
+			echo "<a href=\"viewer.php?file=".$_GET[file]."&page=".$left_num."&LtoR=".$_GET[LtoR]."\">";
+			echo "<img src=\"left.jpg\" height=\"100%\"/>";
+			echo "</a>";
+
+			file_put_contents("right.jpg", file_get_contents('zip://'.$_GET[file].'#'.$image_data[$_GET[page]+1][0]));
+			echo "<a href=\"viewer.php?file=".$_GET[file]."&page=".$right_num."&LtoR=".$_GET[LtoR]."\">";
+			echo "<img src=\"right.jpg\" height=\"100%\"/>";
+			echo "</a>";
+		}
+		else{
+			echo "<a href=\"viewer.php?file=".$_GET[file]."&page=".$right_num."&LtoR=".$_GET[LtoR]."\">";
+			echo "<img src=\"right.jpg\" height=\"100%\"/>";
+			echo "</a>";
+
+			file_put_contents("right.jpg", file_get_contents('zip://'.$_GET[file].'#'.$image_data[$_GET[page]+1][0]));
+			echo "<a href=\"viewer.php?file=".$_GET[file]."&page=".$left_num."&LtoR=".$_GET[LtoR]."\">";
+			echo "<img src=\"left.jpg\" height=\"100%\"/>";
+			echo "</a>";		}
 	}
 }
 ?>
 
+</head>
+<body>
+
+<div>
+<div width="80%" style="float:left;">
 <?PHP
 	$zip_data = readZipData($_GET[file]);
 	$image_data = readImageData($zip_data);
 	drawImageData($image_data);
 	
-	
 ?>
+</div>
+<div width="20%" style="folat:right;">
+
+<?PHP
+//page number, goto button.
+?>
+<form method="get" action="viewer.php">
+<input name="page" type="number"/ min="1" value="<?PHP
+$page = $_GET[page] + 1;
+echo $page;
+?>
+" max="<?PHP
+	echo sizeof($image_data);
+?>
+" method="GET"/>
+<input type="text" name="file" method="GET" hidden="true" value="<?PHP
+	echo $_GET[file];
+?>
+"/>
+<input type="submit" value="go"/>
+<br/>
+
+<?PHP
+//LtoR, RtoL
+?>
+
+<input type="radio" name="LtoR" <?PHP
+	if($_GET[LtoR] == 1)
+		echo "checked=\"true\"";
+?>
+ value="1" method="get" onClick="location.href='viewer.php?file=<?PHP
+ echo $_GET[file];
+ ?>
+&page=<?PHP
+ echo $_GET[page];
+ ?>
+&LtoR=1'">LtoR
+<input type="radio" name="LtoR" <?PHP
+	if($_GET[LtoR] == 0)
+		echo "checked=\"true\"";
+?>
+ value="0" method="get" onClick="location.href='viewer.php?file=<?PHP
+ echo $_GET[file];
+ ?>
+&page=<?PHP
+ echo $_GET[page];
+ ?>
+&LtoR=0'">
+ RtoL
+</form>
+
+<?PHP
+//go back button
+?>
+<form action="index.php">
+<input type="submit" value="go back"/>
+</form>
+
+
+</div>
+</div>
 
 </body>
 </html>

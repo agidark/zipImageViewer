@@ -1,5 +1,7 @@
 <html>
 <head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+<title>Zip image viewer - list</title>
 </head>
 <body>
 <?PHP
@@ -16,7 +18,7 @@
 	}
 	
 	for($i = 0 ; $i < $count ; $i ++){
-		echo "<a href=\"viewer.php?file=".$arr[$i]."&page=0\">";
+		echo "<a href=\"viewer.php?file=".$arr[$i]."&page=0&LtoR=0\">";
 		echo $arr[$i];
 		echo "</a>";
 		echo "<br/>";
